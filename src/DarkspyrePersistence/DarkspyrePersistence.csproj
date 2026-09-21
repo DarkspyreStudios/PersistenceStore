@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Darkspyre.Persistence</PackageId>
+    <AssemblyName>DarkspyrePersistence</AssemblyName>
+    <RootNamespace>Darkspyre.Persistence</RootNamespace>
+    <Description>Storage-neutral blob persistence for .NET, with an atomic filesystem provider rooted in the operating system's per-user application-data directory.</Description>
+    <PackageTags>persistence;storage;blob;filesystem;application-data</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
+
+</Project>

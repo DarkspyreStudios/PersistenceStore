@@ -44,7 +44,10 @@ public interface IPersistenceStore
         Stream content,
         CancellationToken cancellationToken = default);
 
-    /// <summary>Deletes an asset. Deleting an asset that does not exist succeeds.</summary>
+    /// <summary>
+    /// Deletes an asset. Deleting an asset that does not exist succeeds, including when its store
+    /// or parent directories do not exist. Deletion does not create missing directories.
+    /// </summary>
     Task DeleteAsync(
         string storeName,
         string assetName,

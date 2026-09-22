@@ -19,7 +19,7 @@ The `Darkspyre.Persistence` package contains the `IPersistenceStore` contract an
 | `OpenReadAsync(storeName, assetName)` | Returns a caller-owned readable stream, or `null` when the asset is missing. |
 | `EnumerateAsync(storeName, assetNamePrefix)` | Returns matching logical names recursively in ordinal order. An empty prefix lists the complete store. |
 | `SaveAsync(storeName, assetName, content)` | Creates or atomically replaces one complete asset using bytes from the stream's current position. The caller retains ownership of the input stream. |
-| `DeleteAsync(storeName, assetName)` | Deletes one asset. Deleting a missing asset succeeds. |
+| `DeleteAsync(storeName, assetName)` | Deletes one asset. Deleting a missing asset succeeds, even when its store or parent directories do not exist; it never creates directories. |
 
 Missing and empty assets are distinct: a missing read returns `null`, while a saved zero-byte asset
 returns a readable empty stream. Convenience extensions provide complete byte-array and UTF-8 string
@@ -41,6 +41,10 @@ Environment.SpecialFolder.ApplicationData/Darkspyre Studios/<storeName>/<assetNa
 operating system. Writes are copied and flushed to private staging storage on the same filesystem,
 then atomically moved into place. Readers see a complete old or new asset, never a partially written
 destination.
+
+Deleting an absent asset is a no-op, including before the root/store has ever been created or when
+a nested parent directory is missing. This does not hide invalid names, cancellation, access errors
+or other filesystem failures. Version 1.0.1 fixes the missing-parent-directory case in the OS provider.
 
 ```csharp
 using System.Text;

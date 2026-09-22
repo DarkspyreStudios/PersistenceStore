@@ -132,6 +132,62 @@ public sealed class OsUserPersistenceStoreTests : IDisposable
         Assert.Null(await _store.OpenReadAsync("ExampleApp", "delete-me.txt"));
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public async Task DeleteMissingAssetSucceedsWithoutCreatingAncestors(int existingDirectoryDepth)
+    {
+        string[] ancestors =
+        [
+            _root,
+            Path.Combine(_root, "ExampleApp"),
+            Path.Combine(_root, "ExampleApp", "nested"),
+        ];
+        if (existingDirectoryDepth > 0)
+        {
+            Directory.CreateDirectory(ancestors[existingDirectoryDepth - 1]);
+        }
+
+        bool[] existedBefore = ancestors.Select(Directory.Exists).ToArray();
+
+        await _store.DeleteAsync("ExampleApp", "nested/missing.bin");
+        await _store.DeleteAsync("ExampleApp", "nested/missing.bin");
+
+        Assert.Equal(existedBefore, ancestors.Select(Directory.Exists));
+        Assert.False(await _store.ExistsAsync("ExampleApp", "nested/missing.bin"));
+    }
+
+    [Fact]
+    public async Task DeleteDoesNotSwallowErrorsForADirectoryAtTheAssetPath()
+    {
+        string directory = Path.Combine(_root, "ExampleApp", "not-an-asset");
+        Directory.CreateDirectory(directory);
+        string retained = Path.Combine(directory, "retained.txt");
+        await File.WriteAllTextAsync(retained, "keep");
+
+        Exception? failure = await Record.ExceptionAsync(() =>
+            _store.DeleteAsync("ExampleApp", "not-an-asset"));
+
+        Assert.True(failure is IOException or UnauthorizedAccessException,
+            $"Expected a filesystem error, got {failure?.GetType().Name ?? "success"}.");
+        Assert.Equal("keep", await File.ReadAllTextAsync(retained));
+    }
+
+    [Fact]
+    public async Task CancelledDeletePreservesAnExistingAsset()
+    {
+        await SaveTextAsync("ExampleApp", "keep.txt", "keep");
+        using var source = new CancellationTokenSource();
+        await source.CancelAsync();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(() =>
+            _store.DeleteAsync("ExampleApp", "keep.txt", source.Token));
+
+        Assert.Equal("keep", await ReadTextAsync("ExampleApp", "keep.txt"));
+    }
+
     [Fact]
     public async Task AFailedReplacementPreservesThePreviousCompleteAssetAndRemovesStagingData()
     {
@@ -176,6 +232,8 @@ public sealed class OsUserPersistenceStoreTests : IDisposable
     {
         await Assert.ThrowsAnyAsync<ArgumentException>(
             () => _store.ExistsAsync(storeName, "asset.bin"));
+        await Assert.ThrowsAnyAsync<ArgumentException>(
+            () => _store.DeleteAsync(storeName, "asset.bin"));
     }
 
     [Theory]
@@ -192,6 +250,8 @@ public sealed class OsUserPersistenceStoreTests : IDisposable
     {
         await Assert.ThrowsAnyAsync<ArgumentException>(
             () => _store.SaveAsync("ExampleApp", assetName, new byte[] { 1 }));
+        await Assert.ThrowsAnyAsync<ArgumentException>(
+            () => _store.DeleteAsync("ExampleApp", assetName));
     }
 
     [Theory]

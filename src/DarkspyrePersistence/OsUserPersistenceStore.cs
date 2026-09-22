@@ -176,7 +176,15 @@ public sealed class OsUserPersistenceStore : IPersistenceStore
     {
         cancellationToken.ThrowIfCancellationRequested();
         string path = ResolveAssetPath(storeName, assetName);
-        File.Delete(path);
+        try
+        {
+            File.Delete(path);
+        }
+        catch (DirectoryNotFoundException)
+        {
+            // A missing ancestor also means the asset is absent. Do not create it on delete.
+        }
+
         return Task.CompletedTask;
     }
 

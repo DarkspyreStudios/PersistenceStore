@@ -14,7 +14,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsPackable)' != 'false'">
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>Mathis</Authors>
     <Company>Darkspyre Studios</Company>
     <RepositoryType>git</RepositoryType>

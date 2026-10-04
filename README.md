@@ -40,6 +40,13 @@ Persistence solves these once. `IPersistenceStore` is a storage-neutral contract
 Persistence is not a credential vault. Store tokens, keys, and passwords with
 `Darkspyre.SecureStore`.
 
+## Local source consumption
+
+`eng/SourceReferences.targets` replaces a consumer's `Darkspyre.Persistence` package reference
+with the `src/DarkspyrePersistence/DarkspyrePersistence.csproj` project in this worktree.
+The consumer imports it after declaring package references. Reference metadata is retained;
+runtime exclusions disable output copying, and compile exclusions disable the assembly reference.
+
 ## Install
 
 ```

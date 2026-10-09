@@ -1,4 +1,4 @@
-namespace Darkspyre.Persistence;
+namespace Darkspyre.Persist;
 
 internal static class LogicalName
 {

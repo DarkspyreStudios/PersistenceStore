@@ -1,16 +1,16 @@
 using System.Text;
-using Darkspyre.Persistence;
+using Darkspyre.Persist;
 
-namespace DarkspyrePersistence.Tests;
+namespace Darkspyre.Persist.Tests;
 
-public sealed class OsUserPersistenceStoreTests : IDisposable
+public sealed class OsUserPersistStoreTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"darkspyre-persistence-{Guid.NewGuid():N}");
-    private readonly OsUserPersistenceStore _store;
+    private readonly OsUserPersistStore _store;
 
-    public OsUserPersistenceStoreTests()
+    public OsUserPersistStoreTests()
     {
-        _store = new OsUserPersistenceStore(_root);
+        _store = new OsUserPersistStore(_root);
     }
 
     public void Dispose()

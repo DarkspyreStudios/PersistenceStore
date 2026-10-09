@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\DarkspyrePersistence\DarkspyrePersistence.csproj" />
+    <ProjectReference Include="..\..\src\Darkspyre.Persist\Darkspyre.Persist.csproj" />
   </ItemGroup>
 
 </Project>

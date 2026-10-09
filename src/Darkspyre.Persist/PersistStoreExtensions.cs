@@ -1,15 +1,15 @@
 using System.Text;
 
-namespace Darkspyre.Persistence;
+namespace Darkspyre.Persist;
 
 /// <summary>Convenience operations over the stream-based persistence contract.</summary>
-public static class PersistenceStoreExtensions
+public static class PersistStoreExtensions
 {
     private static readonly Encoding Utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
     /// <summary>Saves a complete in-memory asset.</summary>
     public static async Task SaveAsync(
-        this IPersistenceStore store,
+        this IPersistStore store,
         string storeName,
         string assetName,
         ReadOnlyMemory<byte> content,
@@ -22,7 +22,7 @@ public static class PersistenceStoreExtensions
 
     /// <summary>Saves a string as UTF-8 without a byte-order mark.</summary>
     public static Task SaveStringAsync(
-        this IPersistenceStore store,
+        this IPersistStore store,
         string storeName,
         string assetName,
         string content,
@@ -35,7 +35,7 @@ public static class PersistenceStoreExtensions
 
     /// <summary>Reads a complete asset into memory, or returns <see langword="null"/> when it is missing.</summary>
     public static async Task<byte[]?> ReadBytesAsync(
-        this IPersistenceStore store,
+        this IPersistStore store,
         string storeName,
         string assetName,
         CancellationToken cancellationToken = default)
@@ -54,7 +54,7 @@ public static class PersistenceStoreExtensions
 
     /// <summary>Reads a complete UTF-8 asset, or returns <see langword="null"/> when it is missing.</summary>
     public static async Task<string?> ReadStringAsync(
-        this IPersistenceStore store,
+        this IPersistStore store,
         string storeName,
         string assetName,
         CancellationToken cancellationToken = default)

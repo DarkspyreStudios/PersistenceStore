@@ -1,8 +1,8 @@
 <Project>
   <!-- Source consumers import this target after their package and shared-library references. -->
   <ItemGroup>
-    <_PersistenceStoreSourceProject Include="@(PackageReference->WithMetadataValue('Identity', 'Darkspyre.Persistence')->'$(MSBuildThisFileDirectory)../src/DarkspyrePersistence/DarkspyrePersistence.csproj')" />
-    <PackageReference Remove="Darkspyre.Persistence" />
+    <_PersistenceStoreSourceProject Include="@(PackageReference->WithMetadataValue('Identity', 'Darkspyre.Persist')->'$(MSBuildThisFileDirectory)../src/Darkspyre.Persist/Darkspyre.Persist.csproj')" />
+    <PackageReference Remove="Darkspyre.Persist" />
     <ProjectReference Include="@(_PersistenceStoreSourceProject)">
       <Private Condition="'%(ExcludeAssets)' == 'all' or $([System.String]::Copy(';%(ExcludeAssets);').Contains(';runtime;'))">false</Private>
       <ReferenceOutputAssembly Condition="'%(ExcludeAssets)' == 'all' or $([System.String]::Copy(';%(ExcludeAssets);').Contains(';compile;'))">false</ReferenceOutputAssembly>

@@ -1,6 +1,6 @@
-<img src="https://github.com/DarkspyreStudios/PersistenceStore/raw/main/.github/banner.svg" alt="Darkspyre Persistence">
+<img src="https://github.com/DarkspyreStudios/Persist/raw/main/.github/banner.svg" alt="Darkspyre Persist">
 
-# Darkspyre Persistence
+# Darkspyre Persist
 
 <!-- ownership-notice:start -->
 > **Proprietary software.** Copyright © 2026 Brandon Mathis. All rights reserved.
@@ -11,7 +11,7 @@
 > [CONTRIBUTING.md](CONTRIBUTING.md).
 <!-- ownership-notice:end -->
 
-Darkspyre Persistence stores complete files for an application: settings, images, documents,
+Darkspyre Persist stores complete files for an application: settings, images, documents,
 caches, exports. Application code addresses each file by a store name and a logical asset name,
 and never builds a filesystem path. The default provider keeps files in the current user's
 application-data directory and replaces each one atomically.
@@ -26,8 +26,8 @@ wrong in the same ways:
 - The folder location differs per operating system, and each application computes it again.
 - Code that builds paths directly cannot move to another backend later.
 
-Persistence solves these once. `IPersistenceStore` is a storage-neutral contract over raw bytes.
-`OsUserPersistenceStore` implements it on the local filesystem:
+Persist solves these once. `IPersistStore` is a storage-neutral contract over raw bytes.
+`OsUserPersistStore` implements it on the local filesystem:
 
 - Every save writes to a private staging file, flushes it to disk, and moves it into place.
   A reader sees the complete old asset or the complete new one, never a partial write.
@@ -37,30 +37,30 @@ Persistence solves these once. `IPersistenceStore` is a storage-neutral contract
 - A missing asset reads as `null`, and an empty asset reads as an empty stream. The two are
   distinct.
 
-Persistence is not a credential vault. Store tokens, keys, and passwords with
+Persist is not a credential vault. Store tokens, keys, and passwords with
 `Darkspyre.SecureStore`.
 
 ## Local source consumption
 
-`eng/SourceReferences.targets` replaces a consumer's `Darkspyre.Persistence` package reference
-with the `src/DarkspyrePersistence/DarkspyrePersistence.csproj` project in this worktree.
+`eng/SourceReferences.targets` replaces a consumer's `Darkspyre.Persist` package reference
+with the `src/Darkspyre.Persist/Darkspyre.Persist.csproj` project in this worktree.
 The consumer imports it after declaring package references. Reference metadata is retained;
 runtime exclusions disable output copying, and compile exclusions disable the assembly reference.
 
 ## Install
 
 ```
-dotnet add package Darkspyre.Persistence
+dotnet add package Darkspyre.Persist
 ```
 
-The package targets .NET 10. The namespace is `Darkspyre.Persistence`.
+The package targets .NET 10. The namespace is `Darkspyre.Persist`.
 
 ## Quick start
 
 ```csharp
-using Darkspyre.Persistence;
+using Darkspyre.Persist;
 
-IPersistenceStore persistence = new OsUserPersistenceStore();
+IPersistStore persistence = new OsUserPersistStore();
 
 await persistence.SaveStringAsync("ExampleApp", "notes/welcome.txt", "Hello from Darkspyre.");
 
@@ -73,7 +73,7 @@ Windows and Linux use their own per-user application-data directory.
 With a service container, register the provider as a singleton:
 
 ```csharp
-services.AddSingleton<IPersistenceStore, OsUserPersistenceStore>();
+services.AddSingleton<IPersistStore, OsUserPersistStore>();
 ```
 
 ## Names
@@ -100,7 +100,7 @@ case. Windows and macOS usually treat them as one file, and Linux treats them as
 
 ## The interface
 
-`IPersistenceStore` operates on streams:
+`IPersistStore` operates on streams:
 
 | Method | Behavior |
 | --- | --- |
@@ -110,7 +110,7 @@ case. Windows and macOS usually treat them as one file, and Linux treats them as
 | `SaveAsync(storeName, assetName, content)` | Creates or atomically replaces the asset with the bytes from the stream's current position. The caller keeps ownership of the stream. |
 | `DeleteAsync(storeName, assetName)` | Deletes the asset. Deleting a missing asset succeeds, and never creates directories. |
 
-`PersistenceStoreExtensions` adds whole-asset helpers over the same contract:
+`PersistStoreExtensions` adds whole-asset helpers over the same contract:
 
 | Method | Behavior |
 | --- | --- |
@@ -127,11 +127,11 @@ Every method accepts an optional `CancellationToken`.
 
 ```csharp
 using System.Text.Json;
-using Darkspyre.Persistence;
+using Darkspyre.Persist;
 
 public sealed record Settings(string Theme, int FontSize);
 
-public sealed class SettingsService(IPersistenceStore persistence)
+public sealed class SettingsService(IPersistStore persistence)
 {
     private const string StoreName = "ExampleApp";
     private const string AssetName = "settings.json";
@@ -184,14 +184,14 @@ foreach (string assetName in cached)
 
 ### Testing against a temporary directory
 
-`new OsUserPersistenceStore(rootDirectory)` roots every store beneath an explicit directory. A
+`new OsUserPersistStore(rootDirectory)` roots every store beneath an explicit directory. A
 test uses it to exercise the real filesystem without touching the user's application data:
 
 ```csharp
 string root = Directory.CreateTempSubdirectory().FullName;
 try
 {
-    IPersistenceStore persistence = new OsUserPersistenceStore(root);
+    IPersistStore persistence = new OsUserPersistStore(root);
     var settings = new SettingsService(persistence);
 
     await settings.SaveAsync(new Settings("dark", 14));
@@ -208,7 +208,7 @@ A host that owns a different application-data root uses the same constructor.
 
 ## Storage layout
 
-`OsUserPersistenceStore` keeps each store beneath:
+`OsUserPersistStore` keeps each store beneath:
 
 ```text
 Environment.SpecialFolder.ApplicationData/Darkspyre Studios/<storeName>/<assetName>
@@ -216,14 +216,14 @@ Environment.SpecialFolder.ApplicationData/Darkspyre Studios/<storeName>/<assetNa
 
 Each store holds a `.darkspyre-persistence` directory for staging files. `EnumerateAsync` never
 returns it, and an asset name cannot use it. The layout is an implementation detail of this
-provider and is not part of `IPersistenceStore`.
+provider and is not part of `IPersistStore`.
 
 ## Boundaries
 
-- Persistence does not produce public or browser-loadable URLs. An application's delivery layer
-  reads through `IPersistenceStore` and decides which bytes an authorized caller receives.
-- Persistence is not a credential vault. Store secrets with `Darkspyre.SecureStore`.
-- Persistence does not host a live database file. A database provider owns its own file. A
+- Persist does not produce public or browser-loadable URLs. An application's delivery layer
+  reads through `IPersistStore` and decides which bytes an authorized caller receives.
+- Persist is not a credential vault. Store secrets with `Darkspyre.SecureStore`.
+- Persist does not host a live database file. A database provider owns its own file. A
   consistent export or backup may be saved as a separate asset.
 
 ## Errors

@@ -1,4 +1,4 @@
-namespace Darkspyre.Persistence;
+namespace Darkspyre.Persist;
 
 /// <summary>
 /// Filesystem-backed persistence rooted in the current user's operating-system application-data directory.
@@ -7,7 +7,7 @@ namespace Darkspyre.Persistence;
 /// The default root is <c>Environment.SpecialFolder.ApplicationData/Darkspyre Studios</c>. The explicit-root
 /// constructor supports hosts with a deliberate alternate application-data root and real temporary-filesystem tests.
 /// </remarks>
-public sealed class OsUserPersistenceStore : IPersistenceStore
+public sealed class OsUserPersistStore : IPersistStore
 {
     private const int CopyBufferSize = 81920;
     private const string OrganizationDirectoryName = "Darkspyre Studios";
@@ -15,7 +15,7 @@ public sealed class OsUserPersistenceStore : IPersistenceStore
     private readonly string _rootDirectory;
 
     /// <summary>Creates a store rooted in the current user's OS-specific application-data directory.</summary>
-    public OsUserPersistenceStore()
+    public OsUserPersistStore()
         : this(GetDefaultRootDirectory())
     {
     }
@@ -24,7 +24,7 @@ public sealed class OsUserPersistenceStore : IPersistenceStore
     /// <param name="rootDirectory">
     /// The directory beneath which named stores are created. The caller retains ownership of the directory.
     /// </param>
-    public OsUserPersistenceStore(string rootDirectory)
+    public OsUserPersistStore(string rootDirectory)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(rootDirectory);
         _rootDirectory = Path.GetFullPath(rootDirectory);

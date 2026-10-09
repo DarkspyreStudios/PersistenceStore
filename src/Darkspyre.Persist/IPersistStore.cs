@@ -1,4 +1,4 @@
-namespace Darkspyre.Persistence;
+namespace Darkspyre.Persist;
 
 /// <summary>
 /// Stores complete opaque assets addressed by a store name and a logical asset name.
@@ -8,7 +8,7 @@ namespace Darkspyre.Persistence;
 /// an asset atomically. This contract stores bytes only: it does not serialize application types,
 /// expose backend paths, or provide browser-delivery URLs.
 /// </remarks>
-public interface IPersistenceStore
+public interface IPersistStore
 {
     /// <summary>Determines whether an asset exists.</summary>
     Task<bool> ExistsAsync(

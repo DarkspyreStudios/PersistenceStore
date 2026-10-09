@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/DarkspyrePersistence/DarkspyrePersistence.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/DarkspyrePersistence.Tests/DarkspyrePersistence.Tests.csproj" />
-  </Folder>
-</Solution>

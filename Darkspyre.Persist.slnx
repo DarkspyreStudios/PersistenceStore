@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Darkspyre.Persist/Darkspyre.Persist.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Darkspyre.Persist.Tests/Darkspyre.Persist.Tests.csproj" />
+  </Folder>
+</Solution>

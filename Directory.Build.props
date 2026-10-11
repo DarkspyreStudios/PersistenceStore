@@ -18,7 +18,7 @@
     <Authors>Mathis</Authors>
     <Company>Darkspyre Studios</Company>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/DarkspyreStudios/Persist</RepositoryUrl>
+    <RepositoryUrl>https://github.com/DarkspyreStudios/PersistenceStore</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageReadmeFile>README.md</PackageReadmeFile>

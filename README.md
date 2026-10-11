@@ -1,4 +1,4 @@
-<img src="https://github.com/DarkspyreStudios/Persist/raw/main/.github/banner.svg" alt="Darkspyre Persist">
+<img src="https://github.com/DarkspyreStudios/PersistenceStore/raw/main/.github/banner.svg" alt="Darkspyre Persist">
 
 # Darkspyre Persist
 
@@ -35,6 +35,18 @@ Persist solves these once. `IPersistStore` is a storage-neutral contract over ra
 
 Persist is not a credential vault. Store tokens, keys, and passwords with
 `Darkspyre.SecureStore`.
+
+## Publishing
+
+The manually triggered `.github/workflows/publish.yml` workflow restores and runs
+`Darkspyre.Persist.Tests` in Release, then packs only `Darkspyre.Persist`.
+It publishes the version declared in `Directory.Build.props` to nuget.org.
+`NuGet/login` exchanges the GitHub Actions identity for a short-lived publishing
+key using the NuGet user `darkspyre`. The `DarkspyreStudios` NuGet organization
+owns the matching Trusted Publishing policy for `PersistenceStore`, `publish.yml`,
+and the exact package pattern `Darkspyre.Persist`. No environment is specified.
+A failed step stops publication. An existing package version is not overwritten
+or silently skipped. A successful publication completes policy activation.
 
 ## Local source consumption
 

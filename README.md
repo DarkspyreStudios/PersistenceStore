@@ -3,12 +3,8 @@
 # Darkspyre Persist
 
 <!-- ownership-notice:start -->
-> **Proprietary software.** Copyright © 2026 Brandon Mathis. All rights reserved.
-> No permission is granted to use, copy, modify, or distribute this software
-> without prior written authorization.
-> Any contribution, including code, reviews, patches, issues and designs, is
-> assigned to Brandon Mathis on submission. See [LICENSE.md](LICENSE.md) and
-> [CONTRIBUTING.md](CONTRIBUTING.md).
+> Copyright (c) 2026 Darkspyre Studios, LLC.
+> Licensed under the [MIT License](LICENSE.md). Provided "as is", without warranty.
 <!-- ownership-notice:end -->
 
 Darkspyre Persist stores complete files for an application: settings, images, documents,

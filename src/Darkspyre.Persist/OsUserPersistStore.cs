@@ -190,7 +190,9 @@ public sealed class OsUserPersistStore : IPersistStore
 
     private static string GetDefaultRootDirectory()
     {
-        string applicationData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string applicationData = Environment.GetFolderPath(
+            Environment.SpecialFolder.ApplicationData,
+            Environment.SpecialFolderOption.Create);
         if (string.IsNullOrWhiteSpace(applicationData))
         {
             throw new InvalidOperationException("The operating system did not provide a per-user application-data directory.");

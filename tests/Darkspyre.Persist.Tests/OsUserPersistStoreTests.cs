@@ -33,6 +33,43 @@ public sealed class OsUserPersistStoreTests : IDisposable
     }
 
     [Fact]
+    public async Task DefaultRootCreatesAMissingApplicationDataDirectory()
+    {
+        // On Linux, .NET resolves SpecialFolder.ApplicationData to HOME/.config when XDG_CONFIG_HOME is unset, and
+        // reads both variables on each call. macOS and Windows resolve it through the operating system, which a test
+        // cannot redirect in-process.
+        if (!OperatingSystem.IsLinux())
+        {
+            return;
+        }
+
+        string home = Path.Combine(_root, "home");
+        Directory.CreateDirectory(home);
+        string? previousHome = Environment.GetEnvironmentVariable("HOME");
+        string? previousXdgConfigHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME");
+        Environment.SetEnvironmentVariable("HOME", home);
+        Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", null);
+        try
+        {
+            string applicationData = Environment.GetFolderPath(
+                Environment.SpecialFolder.ApplicationData,
+                Environment.SpecialFolderOption.DoNotVerify);
+            Assert.StartsWith(home + Path.DirectorySeparatorChar, applicationData, StringComparison.Ordinal);
+            Assert.False(Directory.Exists(applicationData));
+
+            var store = new OsUserPersistStore();
+            await store.SaveAsync("ExampleApp", "created.txt", new MemoryStream(Bytes("created")));
+
+            Assert.True(File.Exists(Path.Combine(applicationData, "Darkspyre Studios", "ExampleApp", "created.txt")));
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("HOME", previousHome);
+            Environment.SetEnvironmentVariable("XDG_CONFIG_HOME", previousXdgConfigHome);
+        }
+    }
+
+    [Fact]
     public async Task SaveReadsFromTheInputsCurrentPosition()
     {
         var content = new MemoryStream(Bytes("skip:kept"));

@@ -7,7 +7,7 @@ namespace Darkspyre.Persist;
 /// The default root is <c>Environment.SpecialFolder.ApplicationData/Darkspyre Studios</c>. The explicit-root
 /// constructor supports hosts with a deliberate alternate application-data root and real temporary-filesystem tests.
 /// </remarks>
-public sealed class OsUserPersistStore : IPersistStore
+public sealed class OsUserPersistStore : IPersist
 {
     private const int CopyBufferSize = 81920;
     private const string OrganizationDirectoryName = "Darkspyre Studios";

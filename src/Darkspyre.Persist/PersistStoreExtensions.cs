@@ -9,7 +9,7 @@ public static class PersistStoreExtensions
 
     /// <summary>Saves a complete in-memory asset.</summary>
     public static async Task SaveAsync(
-        this IPersistStore store,
+        this IPersist store,
         string storeName,
         string assetName,
         ReadOnlyMemory<byte> content,
@@ -22,7 +22,7 @@ public static class PersistStoreExtensions
 
     /// <summary>Saves a string as UTF-8 without a byte-order mark.</summary>
     public static Task SaveStringAsync(
-        this IPersistStore store,
+        this IPersist store,
         string storeName,
         string assetName,
         string content,
@@ -35,7 +35,7 @@ public static class PersistStoreExtensions
 
     /// <summary>Reads a complete asset into memory, or returns <see langword="null"/> when it is missing.</summary>
     public static async Task<byte[]?> ReadBytesAsync(
-        this IPersistStore store,
+        this IPersist store,
         string storeName,
         string assetName,
         CancellationToken cancellationToken = default)
@@ -54,7 +54,7 @@ public static class PersistStoreExtensions
 
     /// <summary>Reads a complete UTF-8 asset, or returns <see langword="null"/> when it is missing.</summary>
     public static async Task<string?> ReadStringAsync(
-        this IPersistStore store,
+        this IPersist store,
         string storeName,
         string assetName,
         CancellationToken cancellationToken = default)

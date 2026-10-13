@@ -8,7 +8,7 @@ namespace Darkspyre.Persist;
 /// an asset atomically. This contract stores bytes only: it does not serialize application types,
 /// expose backend paths, or provide browser-delivery URLs.
 /// </remarks>
-public interface IPersistStore
+public interface IPersist
 {
     /// <summary>Determines whether an asset exists.</summary>
     Task<bool> ExistsAsync(

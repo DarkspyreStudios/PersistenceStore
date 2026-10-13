@@ -22,7 +22,7 @@ wrong in the same ways:
 - The folder location differs per operating system, and each application computes it again.
 - Code that builds paths directly cannot move to another backend later.
 
-Persist solves these once. `IPersistStore` is a storage-neutral contract over raw bytes.
+Persist solves these once. `IPersist` is a storage-neutral contract over raw bytes.
 `OsUserPersistStore` implements it on the local filesystem:
 
 - Every save writes to a private staging file, flushes it to disk, and moves it into place.
@@ -68,7 +68,7 @@ The package targets .NET 10. The namespace is `Darkspyre.Persist`.
 ```csharp
 using Darkspyre.Persist;
 
-IPersistStore persistence = new OsUserPersistStore();
+IPersist persistence = new OsUserPersistStore();
 
 await persistence.SaveStringAsync("ExampleApp", "notes/welcome.txt", "Hello from Darkspyre.");
 
@@ -81,7 +81,7 @@ Windows and Linux use their own per-user application-data directory.
 With a service container, register the provider as a singleton:
 
 ```csharp
-services.AddSingleton<IPersistStore, OsUserPersistStore>();
+services.AddSingleton<IPersist, OsUserPersistStore>();
 ```
 
 ## Names
@@ -108,7 +108,7 @@ case. Windows and macOS usually treat them as one file, and Linux treats them as
 
 ## The interface
 
-`IPersistStore` operates on streams:
+`IPersist` operates on streams:
 
 | Method | Behavior |
 | --- | --- |
@@ -139,7 +139,7 @@ using Darkspyre.Persist;
 
 public sealed record Settings(string Theme, int FontSize);
 
-public sealed class SettingsService(IPersistStore persistence)
+public sealed class SettingsService(IPersist persistence)
 {
     private const string StoreName = "ExampleApp";
     private const string AssetName = "settings.json";
@@ -199,7 +199,7 @@ test uses it to exercise the real filesystem without touching the user's applica
 string root = Directory.CreateTempSubdirectory().FullName;
 try
 {
-    IPersistStore persistence = new OsUserPersistStore(root);
+    IPersist persistence = new OsUserPersistStore(root);
     var settings = new SettingsService(persistence);
 
     await settings.SaveAsync(new Settings("dark", 14));
@@ -224,12 +224,12 @@ Environment.SpecialFolder.ApplicationData/Darkspyre Studios/<storeName>/<assetNa
 
 Each store holds a `.darkspyre-persistence` directory for staging files. `EnumerateAsync` never
 returns it, and an asset name cannot use it. The layout is an implementation detail of this
-provider and is not part of `IPersistStore`.
+provider and is not part of `IPersist`.
 
 ## Boundaries
 
 - Persist does not produce public or browser-loadable URLs. An application's delivery layer
-  reads through `IPersistStore` and decides which bytes an authorized caller receives.
+  reads through `IPersist` and decides which bytes an authorized caller receives.
 - Persist is not a credential vault. Store secrets with `Darkspyre.SecureStore`.
 - Persist does not host a live database file. A database provider owns its own file. A
   consistent export or backup may be saved as a separate asset.

@@ -23,7 +23,7 @@ wrong in the same ways:
 - Code that builds paths directly cannot move to another backend later.
 
 Persist solves these once. `IPersist` is a storage-neutral contract over raw bytes.
-`OsUserPersistStore` implements it on the local filesystem:
+`OsUserPersist` implements it on the local filesystem:
 
 - Every save writes to a private staging file, flushes it to disk, and moves it into place.
   A reader sees the complete old asset or the complete new one, never a partial write.
@@ -68,7 +68,7 @@ The package targets .NET 10. The namespace is `Darkspyre.Persist`.
 ```csharp
 using Darkspyre.Persist;
 
-IPersist persistence = new OsUserPersistStore();
+IPersist persistence = new OsUserPersist();
 
 await persistence.SaveStringAsync("ExampleApp", "notes/welcome.txt", "Hello from Darkspyre.");
 
@@ -81,7 +81,7 @@ Windows and Linux use their own per-user application-data directory.
 With a service container, register the provider as a singleton:
 
 ```csharp
-services.AddSingleton<IPersist, OsUserPersistStore>();
+services.AddSingleton<IPersist, OsUserPersist>();
 ```
 
 ## Names
@@ -118,7 +118,7 @@ case. Windows and macOS usually treat them as one file, and Linux treats them as
 | `SaveAsync(storeName, assetName, content)` | Creates or atomically replaces the asset with the bytes from the stream's current position. The caller keeps ownership of the stream. |
 | `DeleteAsync(storeName, assetName)` | Deletes the asset. Deleting a missing asset succeeds, and never creates directories. |
 
-`PersistStoreExtensions` adds whole-asset helpers over the same contract:
+`PersistExtensions` adds whole-asset helpers over the same contract:
 
 | Method | Behavior |
 | --- | --- |
@@ -192,14 +192,14 @@ foreach (string assetName in cached)
 
 ### Testing against a temporary directory
 
-`new OsUserPersistStore(rootDirectory)` roots every store beneath an explicit directory. A
+`new OsUserPersist(rootDirectory)` roots every store beneath an explicit directory. A
 test uses it to exercise the real filesystem without touching the user's application data:
 
 ```csharp
 string root = Directory.CreateTempSubdirectory().FullName;
 try
 {
-    IPersist persistence = new OsUserPersistStore(root);
+    IPersist persistence = new OsUserPersist(root);
     var settings = new SettingsService(persistence);
 
     await settings.SaveAsync(new Settings("dark", 14));
@@ -216,7 +216,7 @@ A host that owns a different application-data root uses the same constructor.
 
 ## Storage layout
 
-`OsUserPersistStore` keeps each store beneath:
+`OsUserPersist` keeps each store beneath:
 
 ```text
 Environment.SpecialFolder.ApplicationData/Darkspyre Studios/<storeName>/<assetName>

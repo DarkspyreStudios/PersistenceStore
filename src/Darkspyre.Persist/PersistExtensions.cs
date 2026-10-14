@@ -3,7 +3,7 @@ using System.Text;
 namespace Darkspyre.Persist;
 
 /// <summary>Convenience operations over the stream-based persistence contract.</summary>
-public static class PersistStoreExtensions
+public static class PersistExtensions
 {
     private static readonly Encoding Utf8 = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 

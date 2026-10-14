@@ -3,14 +3,14 @@ using Darkspyre.Persist;
 
 namespace Darkspyre.Persist.Tests;
 
-public sealed class OsUserPersistStoreTests : IDisposable
+public sealed class OsUserPersistTests : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"darkspyre-persistence-{Guid.NewGuid():N}");
-    private readonly OsUserPersistStore _store;
+    private readonly OsUserPersist _store;
 
-    public OsUserPersistStoreTests()
+    public OsUserPersistTests()
     {
-        _store = new OsUserPersistStore(_root);
+        _store = new OsUserPersist(_root);
     }
 
     public void Dispose()
@@ -57,7 +57,7 @@ public sealed class OsUserPersistStoreTests : IDisposable
             Assert.StartsWith(home + Path.DirectorySeparatorChar, applicationData, StringComparison.Ordinal);
             Assert.False(Directory.Exists(applicationData));
 
-            var store = new OsUserPersistStore();
+            var store = new OsUserPersist();
             await store.SaveAsync("ExampleApp", "created.txt", new MemoryStream(Bytes("created")));
 
             Assert.True(File.Exists(Path.Combine(applicationData, "Darkspyre Studios", "ExampleApp", "created.txt")));

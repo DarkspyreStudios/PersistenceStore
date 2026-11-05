@@ -38,6 +38,9 @@ Persist is not a credential vault. Store tokens, keys, and passwords with
 
 ## Publishing
 
+The package's consumer page is `src/Darkspyre.Persist/PACKAGE.md`, packed as `README.md`. This repository README keeps
+the design record and development instructions and is not packed.
+
 The manually triggered `.github/workflows/publish.yml` workflow restores and runs
 `Darkspyre.Persist.Tests` in Release, then packs only `Darkspyre.Persist`.
 It publishes the version declared in `Directory.Build.props` to nuget.org.

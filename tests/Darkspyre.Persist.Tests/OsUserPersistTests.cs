@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using Darkspyre.Persist;
 
@@ -236,10 +237,9 @@ public sealed class OsUserPersistTests : IDisposable
 
         Assert.Equal("original", await ReadTextAsync("ExampleApp", "stable.txt"));
         Assert.Equal(["stable.txt"], await _store.EnumerateAsync("ExampleApp", string.Empty));
-        Assert.Empty(Directory.EnumerateFiles(
-            Path.Combine(_root, "ExampleApp", ".darkspyre-persistence"),
-            "*",
-            SearchOption.AllDirectories));
+        string staging = Path.Combine(_root, "ExampleApp", ".darkspyre-persistence");
+        Assert.Equal(["write.lock"], Directory.EnumerateFiles(staging, "*", SearchOption.AllDirectories)
+            .Select(path => Path.GetRelativePath(staging, path)));
     }
 
     [Fact]
@@ -254,6 +254,99 @@ public sealed class OsUserPersistTests : IDisposable
 
         byte[] saved = Assert.IsType<byte[]>(await _store.ReadBytesAsync("ExampleApp", "race.bin"));
         Assert.True(saved.SequenceEqual(first) || saved.SequenceEqual(second));
+    }
+
+    [Fact]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Naming", "CA1707", Justification = "The settled Tech Design names this focused recovery check explicitly.")]
+    public async Task Recovery_discards_crashed_staging_without_touching_a_live_writer()
+    {
+        await SaveTextAsync("ExampleApp", "stable.txt", "original");
+        string staging = Path.Combine(_root, "ExampleApp", ".darkspyre-persistence");
+        using Process crashed = StartCrashWriter("abandoned.bin");
+        using Process live = new();
+        Task? recovery = null;
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+        try
+        {
+            Assert.Equal("staged", await crashed.StandardOutput.ReadLineAsync(timeout.Token));
+            string abandoned = Assert.Single(Directory.EnumerateFiles(staging, "*.tmp"));
+            Assert.True(new FileInfo(abandoned).Length > 0);
+            crashed.Kill(entireProcessTree: true);
+            await crashed.WaitForExitAsync(timeout.Token);
+
+            live.StartInfo = CrashWriterStartInfo("live.bin");
+            Assert.True(live.Start());
+            Assert.Equal("staged", await live.StandardOutput.ReadLineAsync(timeout.Token));
+            string[] staged = Directory.GetFiles(staging, "*.tmp");
+            Assert.Equal(2, staged.Length);
+            Assert.All(staged, path => Assert.True(new FileInfo(path).Length > 0));
+
+            var otherInstance = new OsUserPersist(_root);
+            recovery = otherInstance.RecoverAsync("ExampleApp", timeout.Token);
+            await Task.Delay(100, timeout.Token);
+            Assert.False(recovery.IsCompleted);
+            Assert.All(staged, path => Assert.True(File.Exists(path)));
+
+            await live.StandardInput.WriteLineAsync("continue");
+            await live.StandardInput.FlushAsync(timeout.Token);
+            await live.WaitForExitAsync(timeout.Token);
+            Assert.Equal(0, live.ExitCode);
+            await recovery;
+
+            Assert.Equal("original", await ReadTextAsync("ExampleApp", "stable.txt"));
+            Assert.Equal(Enumerable.Repeat((byte)0x5a, 81920),
+                Assert.IsType<byte[]>(await _store.ReadBytesAsync("ExampleApp", "live.bin")));
+            Assert.Null(await _store.OpenReadAsync("ExampleApp", "abandoned.bin"));
+            Assert.Equal(["write.lock"], Directory.GetFiles(staging).Select(Path.GetFileName));
+            Assert.Equal(["live.bin", "stable.txt"], await _store.EnumerateAsync("ExampleApp", ""));
+        }
+        finally
+        {
+            StopCrashWriter(crashed);
+            StopCrashWriter(live);
+            await timeout.CancelAsync();
+            if (recovery is not null)
+            {
+                try { await recovery; }
+                catch (OperationCanceledException) { }
+            }
+        }
+    }
+
+    private Process StartCrashWriter(string assetName) =>
+        Process.Start(CrashWriterStartInfo(assetName)) ?? throw new InvalidOperationException("Could not start crash writer.");
+
+    private ProcessStartInfo CrashWriterStartInfo(string assetName)
+    {
+        string host = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH") ??
+            throw new InvalidOperationException("DOTNET_HOST_PATH must name the test SDK host.");
+        var start = new ProcessStartInfo(host)
+        {
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            UseShellExecute = false,
+        };
+        start.ArgumentList.Add(Path.Combine(AppContext.BaseDirectory, "CrashWriter", "Darkspyre.Persist.CrashWriter.dll"));
+        start.ArgumentList.Add(_root);
+        start.ArgumentList.Add("ExampleApp");
+        start.ArgumentList.Add(assetName);
+        return start;
+    }
+
+    private static void StopCrashWriter(Process process)
+    {
+        try
+        {
+            if (!process.HasExited)
+            {
+                process.Kill(entireProcessTree: true);
+                process.WaitForExit();
+            }
+        }
+        catch (InvalidOperationException)
+        {
+            // The second writer may not have started if the first writer failed.
+        }
     }
 
     [Theory]

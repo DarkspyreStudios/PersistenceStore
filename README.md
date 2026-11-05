@@ -229,6 +229,37 @@ Each store holds a `.darkspyre-persistence` directory for staging files. `Enumer
 returns it, and an asset name cannot use it. The layout is an implementation detail of this
 provider and is not part of `IPersist`.
 
+## Abandoned-write recovery
+
+`IPersistRecovery` supplies provider-owned recovery independently of `IPersist`. `OsUserPersist`
+implements both capabilities. Hosts that need recovery register one concrete owner and alias the
+interfaces to that same instance. Consumers inject the capability without inspecting private paths.
+
+```csharp
+var owner = new OsUserPersist(applicationDataRoot);
+IPersist persistence = owner;
+IPersistRecovery recovery = owner;
+await recovery.RecoverAsync("ExampleApp");
+```
+
+Saving and recovery hold the same permanent per-store `write.lock` with exclusive sharing.
+The save lease covers staging creation, copying, flushing, closing, atomic replacement and cleanup.
+Recovery waits for live participating writers, probes that exclusive sharing is enforced, and removes
+only recognized GUID staging files. It never promotes abandoned bytes or removes committed assets.
+A missing staging directory needs no recovery and is not created. The empty coordination file stays
+in place and is excluded from logical asset enumeration.
+
+Cancellation, unavailable sharing and deletion failures propagate; callers must not report a purge
+complete after those failures. Unsupported sharing throws `NotSupportedException` with the message
+`This store does not support safe abandoned-write recovery.` Actual host/filesystem coordination
+must be verified before deployment. Stop old non-cooperating writers before upgrading a shared root.
+Recovery does not use file age as evidence and does not sweep another store or an application's files.
+
+The focused crash fixture runs its managed DLL through `DOTNET_HOST_PATH`, supplied by the test SDK.
+It has no native apphost; on macOS the test host and fixture use the stable signed dotnet host.
+The recovery check kills a writer after actual staged bytes, then holds another live writer while
+recovery waits, and verifies the committed payloads survive after recovery removes abandoned staging.
+
 ## Boundaries
 
 - Persist does not produce public or browser-loadable URLs. An application's delivery layer

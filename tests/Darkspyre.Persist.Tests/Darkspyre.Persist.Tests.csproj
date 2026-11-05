@@ -20,6 +20,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Darkspyre.Persist\Darkspyre.Persist.csproj" />
+    <ProjectReference Include="../Darkspyre.Persist.CrashWriter/Darkspyre.Persist.CrashWriter.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
+
+  <Target Name="CopyCrashWriter" AfterTargets="Build">
+    <ItemGroup>
+      <CrashWriterFiles Include="$(MSBuildProjectDirectory)/../Darkspyre.Persist.CrashWriter/bin/$(Configuration)/$(TargetFramework)/*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(CrashWriterFiles)" DestinationFolder="$(OutDir)CrashWriter" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

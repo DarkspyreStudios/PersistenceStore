@@ -7,7 +7,7 @@ namespace Darkspyre.Persist;
 /// The default root is <c>Environment.SpecialFolder.ApplicationData/Darkspyre Studios</c>. The explicit-root
 /// constructor supports hosts with a deliberate alternate application-data root and real temporary-filesystem tests.
 /// </remarks>
-public sealed class OsUserPersist : IPersist
+public sealed class OsUserPersist : IPersist, IPersistRecovery
 {
     private const int CopyBufferSize = 81920;
     private const string OrganizationDirectoryName = "Darkspyre Studios";
@@ -140,6 +140,7 @@ public sealed class OsUserPersist : IPersist
         Directory.CreateDirectory(destinationDirectory);
         Directory.CreateDirectory(stagingDirectory);
 
+        using FileStream lease = await AcquireWriteLeaseAsync(stagingDirectory, cancellationToken).ConfigureAwait(false);
         string stagingPath = Path.Combine(stagingDirectory, $"{Guid.NewGuid():N}.tmp");
         try
         {
@@ -186,6 +187,92 @@ public sealed class OsUserPersist : IPersist
         }
 
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">The filesystem does not enforce exclusive writer coordination.</exception>
+    public async Task RecoverAsync(string storeName, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        string stagingDirectory = Path.Combine(ResolveStoreDirectory(storeName), LogicalName.InternalDirectoryName);
+        try
+        {
+            _ = File.GetAttributes(stagingDirectory);
+        }
+        catch (FileNotFoundException)
+        {
+            return;
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return;
+        }
+
+        using FileStream lease = await AcquireWriteLeaseAsync(stagingDirectory, cancellationToken).ConfigureAwait(false);
+        VerifyExclusiveSharing(stagingDirectory);
+        foreach (string path in Directory.EnumerateFiles(stagingDirectory, "*.tmp"))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            string name = Path.GetFileNameWithoutExtension(path);
+            if (Guid.TryParseExact(name, "N", out _))
+            {
+                File.Delete(path);
+            }
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+    }
+
+    private static async Task<FileStream> AcquireWriteLeaseAsync(string stagingDirectory, CancellationToken token)
+    {
+        while (true)
+        {
+            token.ThrowIfCancellationRequested();
+            try
+            {
+                return OpenWriteLease(stagingDirectory);
+            }
+            catch (IOException exception) when (IsSharingConflict(exception))
+            {
+                await Task.Delay(25, token).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private static FileStream OpenWriteLease(string stagingDirectory) =>
+        new(Path.Combine(stagingDirectory, "write.lock"), FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+
+    private static void VerifyExclusiveSharing(string stagingDirectory)
+    {
+        const string message = "This store does not support safe abandoned-write recovery.";
+        try
+        {
+            using FileStream probe = OpenWriteLease(stagingDirectory);
+        }
+        catch (IOException exception) when (IsSharingConflict(exception))
+        {
+            return;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            throw new NotSupportedException(message, exception);
+        }
+
+        throw new NotSupportedException(message);
+    }
+
+    private static bool IsSharingConflict(IOException exception)
+    {
+        // .NET Unix FileStream reports the raw EWOULDBLOCK errno; Windows reports HRESULT_FROM_WIN32(ERROR_SHARING_VIOLATION).
+        // These filesystem semantics belong to this provider, not to portable recovery callers.
+        if (OperatingSystem.IsWindows())
+        {
+            return exception.HResult == unchecked((int)0x80070020);
+        }
+
+        bool apple = OperatingSystem.IsMacOS() || OperatingSystem.IsIOS() ||
+            OperatingSystem.IsMacCatalyst() || OperatingSystem.IsTvOS();
+        return exception.HResult == (apple ? 35 : 11);
     }
 
     private static string GetDefaultRootDirectory()
